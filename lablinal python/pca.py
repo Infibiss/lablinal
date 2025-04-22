@@ -304,7 +304,7 @@ def pca(X: 'Matrix', k: list) -> Tuple['Matrix', float]:
     C = covariance_matrix(Xc)
 
     # 3) Находим собственные значения и собственные векторы
-    eigvals = find_eigenvalues(C)
+    eigvals = find_eigenvalues(C, tol=1e-10)
     eigvecs = find_eigenvectors(C, eigvals)
 
     # Упорядочим их по убыванию

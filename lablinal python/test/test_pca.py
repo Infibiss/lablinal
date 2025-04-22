@@ -74,6 +74,11 @@ class TestApplyPcaToDataset(unittest.TestCase):
         self.assertEqual(X_proj.num_columns,2)
         self.assertTrue(0 <= ratio <= 1)
 
+    def test_wine_k2(self):
+        X_proj, ratio = apply_pca_to_dataset("wine", 2)
+        self.assertEqual(X_proj.num_columns,2)
+        self.assertTrue(0 <= ratio <= 1)
+
 class TestAutoSelectK(unittest.TestCase):
     def test_auto_select_k(self):
         e = [5, 2, 1, 0.5, 0.1]
