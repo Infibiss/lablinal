@@ -11,7 +11,7 @@ from matrix import Matrix
 from bisection import Bisection
 
 
-def gauss_solver(A: 'Matrix', B: 'Matrix', eps: 'float' = 1e-10, return_nullspace: bool = True) -> List['Matrix']:
+def gauss_solver(A: 'Matrix', B: 'Matrix', eps: 'float' = 1e-15, return_nullspace: bool = True) -> List['Matrix']:
     """
     Вход:
         A: матрица коэффициентов (n×n). Используется класс Matrix из предыдущей лабораторной работы
@@ -216,7 +216,7 @@ def find_eigenvalues(C: 'Matrix', tol: float = 1e-15) -> List[float]:
 
     # Ищем n корней. Разобьем на отрезки и будем смотреть смену знака, так как тогда внутри корень
     intervals = []
-    k = 100  # Коэффициент разбиения отрезка
+    k = 500  # Коэффициент разбиения отрезка
     step = (right_bound - left_bound) / float(n * k + 1)  # Например поделим так
 
     x1 = left_bound
@@ -225,8 +225,6 @@ def find_eigenvalues(C: 'Matrix', tol: float = 1e-15) -> List[float]:
         x2 = left_bound + i * step
 
         val = det_func(x2)
-        if x1 <= 0.02277254327597331 <= x2:
-            print("values:", prev_val, val)
         if prev_val * val < 0:  # Нашли смену знака
             intervals.append((x1, x2))
             if len(intervals) == n:  # Считаем что у нас n корней
@@ -244,30 +242,6 @@ def find_eigenvalues(C: 'Matrix', tol: float = 1e-15) -> List[float]:
     # Сортируем
     eigenvalues.sort(reverse=True)
     return eigenvalues
-
-def find_eigenpairs_numpy(C: 'Matrix') -> Tuple[List[float], List['Matrix']]:
-    """
-    Возвращает (eigenvalues_sorted_desc, eigenvectors_as_Matrix_objects),
-    используя numpy.linalg.eigh – надёжно и быстро для симметричных матриц.
-    """
-    # переводим Matrix → numpy.array
-    A = np.array(C.list(), dtype=float)
-    eigvals, eigvecs = np.linalg.eigh(A)          # уже отсортированы по возрастанию
-    idx = np.argsort(eigvals)[::-1]               # в порядке убывания
-    eigvals = eigvals[idx]
-    eigvecs = eigvecs[:, idx]
-
-    # упакуем в наш класс Matrix
-    vectors = []
-    m = C.num_rows
-    for k in range(len(eigvals)):
-        col = eigvecs[:, k]
-        v = Matrix(num_rows=m, num_cols=1, accuracy=10)
-        for i, val in enumerate(col, start=1):
-            v[i, 1] = val
-        vectors.append(v)
-
-    return eigvals.tolist(), vectors
 
 def find_eigenvectors(C: 'Matrix', eigenvalues: List[float]) -> List['Matrix']:
     """
@@ -330,10 +304,8 @@ def pca(X: 'Matrix', k: list) -> Tuple['Matrix', float]:
     C = covariance_matrix(Xc)
 
     # 3) Находим собственные значения и собственные векторы
-    eigvals, eigvecs = find_eigenpairs_numpy(C)
-    eigvals_mine = find_eigenvalues(C)
-    print("Mine:", eigvals_mine, "numpy:", eigvals)
-    eigvecs = find_eigenvectors(C, eigvals_mine)
+    eigvals = find_eigenvalues(C)
+    eigvecs = find_eigenvectors(C, eigvals)
 
     # Упорядочим их по убыванию
     pairs = list(zip(eigvals, eigvecs))
@@ -367,7 +339,6 @@ def plot_pca_projection(X_proj: 'Matrix', labels: List[int] | None = None) -> Fi
     if labels is None:
         ax.scatter(xs, ys, s=30)
     else:
-        # один цвет – один класс
         classes = sorted(set(labels))
         palette = plt.cm.get_cmap('tab10', len(classes))
         for cl in classes:
@@ -379,7 +350,6 @@ def plot_pca_projection(X_proj: 'Matrix', labels: List[int] | None = None) -> Fi
     ax.set_ylabel("PC2")
     ax.set_title("PCA projection")
     return fig
-
 
 
 def reconstruction_error(X: 'Matrix', X_recon: 'Matrix') -> float:
@@ -515,7 +485,7 @@ def apply_pca_to_dataset(dataset_name: str, k: int) -> Tuple['Matrix', float]:
     # Превращаем ds.data в Matrix
     arr = df.data
     n, m = arr.shape
-    X = Matrix(num_rows=n, num_cols=m, accuracy=2, arr=arr.tolist())
+    X = Matrix(num_rows=n, num_cols=m, accuracy=15, arr=arr.tolist())
 
     # Возвращаем результат PCA
     X_proj, ratio = pca(X, k)
